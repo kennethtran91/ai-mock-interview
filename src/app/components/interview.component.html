@@ -1,0 +1,182 @@
+<!-- Starting Page -->
+    <div class="start-page" *ngIf="!hasStarted && !session.isCompleted">
+      <div class="welcome-header">
+        <h1>US Naturalization Civics Test Practice</h1>
+        <div class="official-badge">Official USCIS Questions • 2025 Edition</div>
+      </div>
+
+      <div class="instructions-panel">
+        <h2>Test Instructions</h2>
+        <div class="instruction-list">
+          <div class="instruction-item">
+            <span class="instruction-icon">📋</span>
+            <div class="instruction-text">
+              <strong>Format:</strong> You will be asked 10 questions from the official USCIS civics test
+            </div>
+          </div>
+          <div class="instruction-item">
+            <span class="instruction-icon">✅</span>
+            <div class="instruction-text">
+              <strong>Passing Score:</strong> You must answer 6 out of 10 questions correctly to pass
+            </div>
+          </div>
+          <div class="instruction-item">
+            <span class="instruction-icon">🎤</span>
+            <div class="instruction-text">
+              <strong>Voice Interaction:</strong> Listen to each question and speak your answer clearly
+            </div>
+          </div>
+          <div class="instruction-item">
+            <span class="instruction-icon">⏱️</span>
+            <div class="instruction-text">
+              <strong>Duration:</strong> Approximately 10-15 minutes (similar to real test timing)
+            </div>
+          </div>
+          <div class="instruction-item">
+            <span class="instruction-icon">📖</span>
+            <div class="instruction-text">
+              <strong>Topics:</strong> American government, history, geography, symbols, and holidays
+            </div>
+          </div>
+        </div>
+
+        <div class="test-info">
+          <h3>Before You Begin:</h3>
+          <ul>
+            <li>Make sure your microphone is working and permission is granted</li>
+            <li>Find a quiet place to take the test</li>
+            <li>Speak clearly and at a normal pace</li>
+            <li>You can use the mute button if you need to pause</li>
+            <li>The stop button will end the test early if needed</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="audio-controls">
+        <h3>Audio Settings</h3>
+        <div class="control-buttons">
+          <button 
+            class="btn btn-control" 
+            [ngClass]="{'muted': isMuted}"
+            (click)="toggleMute()">
+            <span *ngIf="!isMuted">🔊 Audio On</span>
+            <span *ngIf="isMuted">🔇 Audio Muted</span>
+          </button>
+          <div class="volume-info">
+            <small>{{isMuted ? 'Audio is muted - you will see text only' : 'Audio is enabled - questions will be spoken aloud'}}</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="start-controls">
+        <button class="btn btn-primary btn-start" (click)="startTest()">
+          🚀 Start Naturalization Test
+        </button>
+        <div class="start-note">
+          <small>Click the button above when you're ready to begin your practice test</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test In Progress -->
+    <div class="interview-container" *ngIf="hasStarted && !session.isCompleted">
+      <div class="test-header">
+        <h2>🇺🇸 Naturalization Civics Test</h2>
+        <div class="test-controls">
+          <button class="btn btn-control btn-small" (click)="toggleMute()">
+            {{isMuted ? '🔇' : '🔊'}}
+          </button>
+          <button class="btn btn-danger btn-small" (click)="stopTest()">
+            ⏹️ Stop Test
+          </button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="question-counter">
+          Question {{session.currentQuestionIndex + 1}} of {{session.questions.length}}
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="((session.currentQuestionIndex + 1) / session.questions.length) * 100"></div>
+        </div>
+        <div class="status-indicator" [ngClass]="{
+          'listening': session.isListening,
+          'processing': session.isProcessing,
+          'ready': !session.isListening && !session.isProcessing
+        }">
+          <span *ngIf="session.isListening">🎤 Listening...</span>
+          <span *ngIf="session.isProcessing">🤔 Evaluating...</span>
+          <span *ngIf="!session.isListening && !session.isProcessing">Ready for Answer</span>
+        </div>
+      </div>
+
+      <div class="question-section">
+        <h3>Current Question:</h3>
+        <p class="question-text">{{getCurrentQuestion()}}</p>
+        <div class="question-controls">
+          <button 
+            class="btn btn-secondary" 
+            (click)="repeatQuestion()"
+            [disabled]="session.isProcessing">
+            🔊 Repeat Question
+          </button>
+        </div>
+      </div>
+
+      <div class="answer-section">
+        <button 
+          class="btn btn-primary btn-large"
+          (click)="startListening()"
+          [disabled]="session.isListening || session.isProcessing">
+          <span *ngIf="!session.isListening">🎤 Speak Your Answer</span>
+          <span *ngIf="session.isListening">🎙️ Speaking... (Click to stop)</span>
+        </button>
+        <div class="answer-hint" *ngIf="!session.isListening && !session.isProcessing">
+          <small>Click the button above and speak your answer clearly</small>
+        </div>
+      </div>
+
+      <div class="conversation-history" *ngIf="session.userAnswers.length > 0">
+        <h3>Previous Questions & Answers:</h3>
+        <div class="conversation-item" *ngFor="let answer of session.userAnswers; let i = index">
+          <div class="question-review">
+            <strong>Q{{i + 1}}:</strong> {{session.questions[i]}}
+          </div>
+          <div class="user-answer">
+            <strong>Your Answer:</strong> "{{answer}}"
+          </div>
+          <div class="ai-response" *ngIf="session.aiResponses[i]">
+            <strong>Result:</strong> {{session.aiResponses[i]}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Completion -->
+    <div class="completion-section" *ngIf="session.isCompleted">
+      <h2>🎉 Naturalization Test Complete!</h2>
+      <div class="final-score">
+        <h3>Your Results:</h3>
+        <div class="score-display">
+          <div class="score-number">{{getCorrectAnswersCount()}}/{{session.questions.length}}</div>
+          <div class="score-label">Correct Answers</div>
+        </div>
+        <div class="result-status" [ngClass]="{'passed': isPassed(), 'failed': !isPassed()}">
+          <p *ngIf="isPassed()">✅ <strong>CONGRATULATIONS - YOU PASSED!</strong></p>
+          <p *ngIf="!isPassed()">📚 <strong>KEEP STUDYING - TRY AGAIN</strong></p>
+          <p class="result-detail">
+            <span *ngIf="isPassed()">You've met the requirement of 6 or more correct answers. Great job preparing for your naturalization interview!</span>
+            <span *ngIf="!isPassed()">You need at least 6 correct answers to pass. Review the USCIS study materials and practice more.</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="completion-actions">
+        <button class="btn btn-primary" (click)="restartTest()">
+          🔄 Take Another Practice Test
+        </button>
+        <button class="btn btn-secondary" (click)="goBackToStart()">
+          📋 Back to Instructions
+        </button>
+      </div>
+    </div>
