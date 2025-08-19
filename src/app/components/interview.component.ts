@@ -197,10 +197,10 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   getCorrectAnswersCount(): number {
-    return this.session.aiResponses.filter(response => 
-      response.toLowerCase().includes('correct') || 
-      response.toLowerCase().includes('right')
-    ).length;
+    return this.session.aiResponses.filter(response => {
+      const normalized = response.trim().toLowerCase();
+      return normalized.startsWith('correct') || normalized.startsWith('right');
+    }).length;
   }
 
   isPassed(): boolean {
