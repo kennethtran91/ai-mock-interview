@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SpeechService } from '../services/speech.service';
-import { OpenAIService } from '../services/openai.service';
 import { InterviewService } from '../services/interview.service';
 import { InterviewSession, QuestionEvaluation } from '../models/interview.model';
 import { Subscription } from 'rxjs';
@@ -18,10 +17,10 @@ export class InterviewComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   hasStarted = false;
   isMuted = false;
+  isStopped = false;
 
   constructor(
     private speechService: SpeechService,
-    private openaiService: OpenAIService,
     private interviewService: InterviewService
   ) {
     this.session = this.interviewService.getCurrentSession();
@@ -52,7 +51,11 @@ export class InterviewComponent implements OnInit, OnDestroy {
   // Test control methods
   stopTest() {
     if (confirm('Are you sure you want to stop the test? Your progress will be lost.')) {
+      this.isStopped = true;
       this.speechService.stopListening();
+    if (this.speechService.cancel) {
+      this.speechService.cancel();
+    }
       this.hasStarted = false;
       this.interviewService.resetInterview();
     }
@@ -71,17 +74,13 @@ export class InterviewComponent implements OnInit, OnDestroy {
 
   // Main interview flow
   async startInterview() {
+    if (this.isStopped) return;
     await this.delay(1000);
-    
-    // if (!this.isMuted) {
-    //   await this.speechService.speak("Welcome to the United States Naturalization Interview Practice! I will ask you 10 civics questions from the official USCIS test. You must answer 6 out of 10 correctly to pass. Listen carefully and speak your answer clearly. Good luck, and let's begin!");
-    //   await this.delay(1000);
-    // }
-    
     await this.askCurrentQuestion();
   }
 
   async askCurrentQuestion() {
+    if (this.isStopped) return;
     const question = this.getCurrentQuestion();
     if (!this.isMuted) {
       await this.speechService.speak(question);
@@ -89,6 +88,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   async repeatQuestion() {
+    if (this.isStopped) return;
     if (!this.isMuted) {
       await this.askCurrentQuestion();
     }
@@ -99,6 +99,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   async startListening() {
+    if (this.isStopped) return;
     try {
       this.interviewService.updateSession({ isListening: true });
       
@@ -129,26 +130,12 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   async evaluateAnswer(userAnswer: string) {
+    if (this.isStopped) return;
     try {
       const question = this.getCurrentQuestion();
-      
-      // Try OpenAI evaluation first, fall back to local evaluation
-      try {
-        const response = await this.openaiService.evaluateAnswer(question, userAnswer).toPromise();
-        const aiContent = response.choices[0].message.content;
-        
-        // Parse AI response
-        const evaluation = JSON.parse(aiContent);
-        await this.handleEvaluation(evaluation);
-        
-      } catch (aiError) {
-        console.warn('OpenAI evaluation failed, using local evaluation:', aiError);
-        
-        // Fallback to local evaluation
-        const localEvaluation = this.interviewService.evaluateAnswerLocally(question, userAnswer);
-        await this.handleEvaluation(localEvaluation);
-      }
-
+      // Only use local evaluation
+      const localEvaluation = this.interviewService.evaluateAnswerLocally(question, userAnswer);
+      await this.handleEvaluation(localEvaluation);
     } catch (error) {
       console.error('Error evaluating answer:', error);
       
@@ -161,6 +148,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   async handleEvaluation(evaluation: QuestionEvaluation) {
+    if (this.isStopped) return;
     // Speak the feedback only if not muted
     if (!this.isMuted) {
       await this.speechService.speak(evaluation.feedback);
@@ -175,6 +163,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   async moveToNext() {
+    if (this.isStopped) return;
     this.interviewService.moveToNextQuestion();
     this.interviewService.updateSession({ isProcessing: false });
 

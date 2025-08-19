@@ -88,4 +88,20 @@ export class SpeechService {
       this.isListeningSubject.next(false);
     }
   }
+
+  cancel() {
+  // Cancel speech synthesis if speaking
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  // Abort speech recognition if active
+  if (this.recognition) {
+    try {
+      this.recognition.abort();
+    } catch (e) {
+      // Ignore errors if already stopped
+    }
+    this.isListeningSubject.next(false);
+  }
+}
 }
