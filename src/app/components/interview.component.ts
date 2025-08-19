@@ -73,10 +73,10 @@ export class InterviewComponent implements OnInit, OnDestroy {
   async startInterview() {
     await this.delay(1000);
     
-    if (!this.isMuted) {
-      await this.speechService.speak("Welcome to the United States Naturalization Interview Practice! I will ask you 10 civics questions from the official USCIS test. You must answer 6 out of 10 correctly to pass. Listen carefully and speak your answer clearly. Good luck, and let's begin!");
-      await this.delay(1000);
-    }
+    // if (!this.isMuted) {
+    //   await this.speechService.speak("Welcome to the United States Naturalization Interview Practice! I will ask you 10 civics questions from the official USCIS test. You must answer 6 out of 10 correctly to pass. Listen carefully and speak your answer clearly. Good luck, and let's begin!");
+    //   await this.delay(1000);
+    // }
     
     await this.askCurrentQuestion();
   }

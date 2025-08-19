@@ -8,7 +8,7 @@ declare global {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SpeechService {
   private recognition: any;
@@ -32,18 +32,21 @@ export class SpeechService {
     return new Promise((resolve) => {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
+        utterance.rate = 1;
+        utterance.pitch = 1.1;
         utterance.volume = 1;
-        
-        utterance.onend = () => {
-          resolve();
-        };
-        
-        utterance.onerror = () => {
-          resolve();
-        };
-        
+
+        // Select a more natural voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(
+          (v) => v.name.includes('Google') && v.lang === 'en-US'
+        );
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+
+        utterance.onend = () => resolve();
+        utterance.onerror = () => resolve();
         speechSynthesis.speak(utterance);
       } else {
         resolve();
